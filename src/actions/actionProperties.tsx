@@ -666,7 +666,7 @@ export const actionChangeFontFamily = register({
       {
         value: FONT_FAMILY.JasonHandwriting1,
         text: t("labels.JasonHandwriting"),
-        icon: <FontFamilyCodeIcon theme={appState.theme} />,
+        icon: <FontFamilyHandDrawnIcon theme={appState.theme} />,
       },
     ];
 
