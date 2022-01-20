@@ -20,7 +20,7 @@ jobs:
           npm run build
       - name: create cname file
         run: |
-          echo "https://excalidraw.mebtte.com" > build/CNAME
+          echo "https://bingooo.github.io/excalidraw/" > build/CNAME
       - name: deploy gh-pages
         run: |
           cd build
