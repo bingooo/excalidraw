@@ -43,6 +43,7 @@ const alignSelectedElements = (
 
 export const actionAlignTop = register({
   name: "alignTop",
+  trackEvent: { category: "element" },
   perform: (elements, appState) => {
     return {
       appState,
@@ -59,7 +60,7 @@ export const actionAlignTop = register({
     <ToolButton
       hidden={!enableActionGroup(elements, appState)}
       type="button"
-      icon={<AlignTopIcon theme={appState.theme} />}
+      icon={AlignTopIcon}
       onClick={() => updateData(null)}
       title={`${t("labels.alignTop")} — ${getShortcutKey(
         "CtrlOrCmd+Shift+Up",
@@ -72,6 +73,7 @@ export const actionAlignTop = register({
 
 export const actionAlignBottom = register({
   name: "alignBottom",
+  trackEvent: { category: "element" },
   perform: (elements, appState) => {
     return {
       appState,
@@ -88,7 +90,7 @@ export const actionAlignBottom = register({
     <ToolButton
       hidden={!enableActionGroup(elements, appState)}
       type="button"
-      icon={<AlignBottomIcon theme={appState.theme} />}
+      icon={AlignBottomIcon}
       onClick={() => updateData(null)}
       title={`${t("labels.alignBottom")} — ${getShortcutKey(
         "CtrlOrCmd+Shift+Down",
@@ -101,6 +103,7 @@ export const actionAlignBottom = register({
 
 export const actionAlignLeft = register({
   name: "alignLeft",
+  trackEvent: { category: "element" },
   perform: (elements, appState) => {
     return {
       appState,
@@ -117,7 +120,7 @@ export const actionAlignLeft = register({
     <ToolButton
       hidden={!enableActionGroup(elements, appState)}
       type="button"
-      icon={<AlignLeftIcon theme={appState.theme} />}
+      icon={AlignLeftIcon}
       onClick={() => updateData(null)}
       title={`${t("labels.alignLeft")} — ${getShortcutKey(
         "CtrlOrCmd+Shift+Left",
@@ -130,6 +133,8 @@ export const actionAlignLeft = register({
 
 export const actionAlignRight = register({
   name: "alignRight",
+  trackEvent: { category: "element" },
+
   perform: (elements, appState) => {
     return {
       appState,
@@ -146,7 +151,7 @@ export const actionAlignRight = register({
     <ToolButton
       hidden={!enableActionGroup(elements, appState)}
       type="button"
-      icon={<AlignRightIcon theme={appState.theme} />}
+      icon={AlignRightIcon}
       onClick={() => updateData(null)}
       title={`${t("labels.alignRight")} — ${getShortcutKey(
         "CtrlOrCmd+Shift+Right",
@@ -159,6 +164,8 @@ export const actionAlignRight = register({
 
 export const actionAlignVerticallyCentered = register({
   name: "alignVerticallyCentered",
+  trackEvent: { category: "element" },
+
   perform: (elements, appState) => {
     return {
       appState,
@@ -173,7 +180,7 @@ export const actionAlignVerticallyCentered = register({
     <ToolButton
       hidden={!enableActionGroup(elements, appState)}
       type="button"
-      icon={<CenterVerticallyIcon theme={appState.theme} />}
+      icon={CenterVerticallyIcon}
       onClick={() => updateData(null)}
       title={t("labels.centerVertically")}
       aria-label={t("labels.centerVertically")}
@@ -184,6 +191,7 @@ export const actionAlignVerticallyCentered = register({
 
 export const actionAlignHorizontallyCentered = register({
   name: "alignHorizontallyCentered",
+  trackEvent: { category: "element" },
   perform: (elements, appState) => {
     return {
       appState,
@@ -198,7 +206,7 @@ export const actionAlignHorizontallyCentered = register({
     <ToolButton
       hidden={!enableActionGroup(elements, appState)}
       type="button"
-      icon={<CenterHorizontallyIcon theme={appState.theme} />}
+      icon={CenterHorizontallyIcon}
       onClick={() => updateData(null)}
       title={t("labels.centerHorizontally")}
       aria-label={t("labels.centerHorizontally")}

@@ -1,6 +1,7 @@
 {
   "labels": {
     "paste": "Paste",
+    "pasteAsPlaintext": "Paste as plaintext",
     "pasteCharts": "Paste charts",
     "selectAll": "Select all",
     "multiSelect": "Add element to selection",
@@ -9,6 +10,7 @@
     "copy": "Copy",
     "copyAsPng": "Copy to clipboard as PNG",
     "copyAsSvg": "Copy to clipboard as SVG",
+    "copyText": "Copy to clipboard as text",
     "bringForward": "Bring forward",
     "sendToBack": "Send to back",
     "bringToFront": "Bring to front",
@@ -64,12 +66,13 @@
     "cartoonist": "Cartoonist",
     "fileTitle": "File name",
     "colorPicker": "Color picker",
+    "canvasColors": "Used on canvas",
     "canvasBackground": "Canvas background",
     "drawingCanvas": "Drawing canvas",
     "layers": "Layers",
     "actions": "Actions",
     "language": "Language",
-    "liveCollaboration": "Live collaboration",
+    "liveCollaboration": "Live collaboration...",
     "duplicateSelection": "Duplicate",
     "untitled": "Untitled",
     "name": "Name",
@@ -106,17 +109,36 @@
     "decreaseFontSize": "Decrease font size",
     "increaseFontSize": "Increase font size",
     "unbindText": "Unbind text",
+    "bindText": "Bind text to the container",
     "link": {
       "edit": "Edit link",
       "create": "Create link",
       "label": "Link"
-    }
+    },
+    "lineEditor": {
+      "edit": "Edit line",
+      "exit": "Exit line editor"
+    },
+
+    "elementLock": {
+      "lock": "Lock",
+      "unlock": "Unlock",
+      "lockAll": "Lock all",
+      "unlockAll": "Unlock all"
+    },
+    "statusPublished": "Published",
+    "sidebarLock": "Keep sidebar open"
+  },
+  "library": {
+    "noItems": "No items added yet...",
+    "hint_emptyLibrary": "Select an item on canvas to add it here, or install a library from the public repository, below.",
+    "hint_emptyPrivateLibrary": "Select an item on canvas to add it here."
   },
   "buttons": {
     "clearReset": "Reset the canvas",
     "exportJSON": "Export to file",
-    "exportImage": "Save as image",
-    "export": "Export",
+    "exportImage": "Export image...",
+    "export": "Save to...",
     "exportToPng": "Export to PNG",
     "exportToSvg": "Export to SVG",
     "copyToClipboard": "Copy to clipboard",
@@ -124,7 +146,7 @@
     "scale": "Scale",
     "save": "Save to current file",
     "saveAs": "Save as",
-    "load": "Load",
+    "load": "Open",
     "getShareableLink": "Get shareable link",
     "close": "Close",
     "selectLanguage": "Select language",
@@ -158,12 +180,11 @@
     "couldNotLoadInvalidFile": "Couldn't load invalid file",
     "importBackendFailed": "Importing from backend failed.",
     "cannotExportEmptyCanvas": "Cannot export empty canvas.",
-    "couldNotCopyToClipboard": "Couldn't copy to clipboard. Try using Chrome browser.",
+    "couldNotCopyToClipboard": "Couldn't copy to clipboard.",
     "decryptFailed": "Couldn't decrypt data.",
     "uploadedSecurly": "The upload has been secured with end-to-end encryption, which means that Excalidraw server and third parties can't read the content.",
     "loadSceneOverridePrompt": "Loading external drawing will replace your existing content. Do you wish to continue?",
     "collabStopOverridePrompt": "Stopping the session will overwrite your previous, locally stored drawing. Are you sure?\n\n(If you want to keep your local drawing, simply close the browser tab instead.)",
-    "errorLoadingLibrary": "There was an error loading the third party library.",
     "errorAddingToLibrary": "Couldn't add item to the library",
     "errorRemovingFromLibrary": "Couldn't remove item from the library",
     "confirmAddLibrary": "This will add {{numShapes}} shape(s) to your library. Are you sure?",
@@ -179,7 +200,9 @@
     "imageInsertError": "Couldn't insert image. Try again later...",
     "fileTooBig": "File is too big. Maximum allowed size is {{maxSize}}.",
     "svgImageInsertError": "Couldn't insert SVG image. The SVG markup looks invalid.",
-    "invalidSVGString": "Invalid SVG."
+    "invalidSVGString": "Invalid SVG.",
+    "cannotResolveCollabServer": "Couldn't connect to the collab server. Please reload the page and try again.",
+    "importLibraryError": "Couldn't load library"
   },
   "toolBar": {
     "selection": "Selection",
@@ -193,8 +216,9 @@
     "text": "Text",
     "library": "Library",
     "lock": "Keep selected tool active after drawing",
-    "penMode": "Prevent pinch-zoom and accept freedraw input only from pen",
-    "link": "Add/ Update link for a selected shape"
+    "penMode": "Pen mode - prevent touch",
+    "link": "Add/ Update link for a selected shape",
+    "eraser": "Eraser"
   },
   "headings": {
     "canvasActions": "Canvas actions",
@@ -213,13 +237,14 @@
     "resize": "You can constrain proportions by holding SHIFT while resizing,\nhold ALT to resize from the center",
     "resizeImage": "You can resize freely by holding SHIFT,\nhold ALT to resize from the center",
     "rotate": "You can constrain angles by holding SHIFT while rotating",
-    "lineEditor_info": "Double-click or press Enter to edit points",
+    "lineEditor_info": "Hold CtrlOrCmd and Double-click or press CtrlOrCmd + Enter to edit points",
     "lineEditor_pointSelected": "Press Delete to remove point(s),\nCtrlOrCmd+D to duplicate, or drag to move",
     "lineEditor_nothingSelected": "Select a point to edit (hold SHIFT to select multiple),\nor hold Alt and click to add new points",
     "placeImage": "Click to place the image, or click and drag to set its size manually",
     "publishLibrary": "Publish your own library",
     "bindTextToElement": "Press enter to add text",
-    "deepBoxSelect": "Hold CtrlOrCmd to deep select, and to prevent dragging"
+    "deepBoxSelect": "Hold CtrlOrCmd to deep select, and to prevent dragging",
+    "eraserRevert": "Hold Alt to revert the elements marked for deletion"
   },
   "canvasError": {
     "cannotShowPreview": "Cannot show preview",
@@ -279,14 +304,15 @@
     "howto": "Follow our guides",
     "or": "or",
     "preventBinding": "Prevent arrow binding",
-    "shapes": "Shapes",
+    "tools": "Tools",
     "shortcuts": "Keyboard shortcuts",
     "textFinish": "Finish editing (text editor)",
     "textNewLine": "Add new line (text editor)",
     "title": "Help",
     "view": "View",
     "zoomToFit": "Zoom to fit all elements",
-    "zoomToSelection": "Zoom to selection"
+    "zoomToSelection": "Zoom to selection",
+    "toggleElementLock": "Lock/unlock selection"
   },
   "clearCanvasDialog": {
     "title": "Clear canvas"
@@ -328,9 +354,9 @@
       "post": "which in short means anyone can use them without restrictions."
     },
     "noteItems": "Each library item must have its own name so it's filterable. The following library items will be included:",
-    "atleastOneLibItem": "Please select at least one library item to get started"
+    "atleastOneLibItem": "Please select at least one library item to get started",
+    "republishWarning": "Note: some of the selected items are marked as already published/submitted. You should only resubmit items when updating an existing library or submission."
   },
-
   "publishSuccessDialog": {
     "title": "Library submitted",
     "content": "Thank you {{authorName}}. Your library has been submitted for review. You can track the status",
@@ -367,7 +393,8 @@
     "fileSaved": "File saved.",
     "fileSavedToFilename": "Saved to {filename}",
     "canvas": "canvas",
-    "selection": "selection"
+    "selection": "selection",
+    "pasteAsSingleElement": "Use {{shortcut}} to paste as a single element,\nor paste into an existing text editor"
   },
   "colors": {
     "ffffff": "White",
@@ -415,5 +442,12 @@
     "5c940d": "Lime 9",
     "e67700": "Yellow 9",
     "d9480f": "Orange 9"
+  },
+  "welcomeScreen": {
+    "data": "All your data is saved locally in your browser.",
+    "switchToPlusApp": "Did you want to go to the Excalidraw+ instead?",
+    "menuHints": "Export, preferences, languages, ...",
+    "toolbarHints": "Pick a tool & Start drawing!",
+    "helpHints": "Shortcuts & help"
   }
 }

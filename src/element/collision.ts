@@ -24,6 +24,7 @@ import {
   NonDeleted,
   ExcalidrawFreeDrawElement,
   ExcalidrawImageElement,
+  ExcalidrawLinearElement,
 } from "./types";
 
 import { getElementAbsoluteCoords, getCurvePathOps, Bounds } from "./bounds";
@@ -34,6 +35,8 @@ import { getShapeForElement } from "../renderer/renderElement";
 import { hasBoundTextElement, isImageElement } from "./typeChecks";
 import { isTextElement } from ".";
 import { isTransparent } from "../utils";
+import { shouldShowBoundingBox } from "./transformHandles";
+import { getBoundTextElement } from "./textElement";
 
 const isElementDraggableFromInside = (
   element: NonDeletedExcalidrawElement,
@@ -63,10 +66,20 @@ export const hitTest = (
   const threshold = 10 / appState.zoom.value;
   const point: Point = [x, y];
 
-  if (isElementSelected(appState, element)) {
+  if (
+    isElementSelected(appState, element) &&
+    shouldShowBoundingBox([element], appState)
+  ) {
     return isPointHittingElementBoundingBox(element, point, threshold);
   }
 
+  const boundTextElement = getBoundTextElement(element);
+  if (boundTextElement) {
+    const isHittingBoundTextElement = hitTest(boundTextElement, appState, x, y);
+    if (isHittingBoundTextElement) {
+      return true;
+    }
+  }
   return isHittingElementNotConsideringBoundingBox(element, appState, point);
 };
 
@@ -77,6 +90,13 @@ export const isHittingElementBoundingBoxWithoutHittingElement = (
   y: number,
 ): boolean => {
   const threshold = 10 / appState.zoom.value;
+
+  // So that bound text element hit is considered within bounding box of container even if its outside actual bounding box of element
+  // eg for linear elements text can be outside the element bounding box
+  const boundTextElement = getBoundTextElement(element);
+  if (boundTextElement && hitTest(boundTextElement, appState, x, y)) {
+    return false;
+  }
 
   return (
     !isHittingElementNotConsideringBoundingBox(element, appState, [x, y]) &&
@@ -90,7 +110,6 @@ export const isHittingElementNotConsideringBoundingBox = (
   point: Point,
 ): boolean => {
   const threshold = 10 / appState.zoom.value;
-
   const check = isTextElement(element)
     ? isStrictlyInside
     : isElementDraggableFromInside(element)
@@ -361,6 +380,14 @@ const hitTestFreeDrawElement = (
     B = element.points[i + 1];
   }
 
+  const shape = getShapeForElement(element);
+
+  // for filled freedraw shapes, support
+  // selecting from inside
+  if (shape && shape.sets.length) {
+    return hitTestRoughShape(shape, x, y, threshold);
+  }
+
   return false;
 };
 
@@ -369,6 +396,7 @@ const hitTestLinear = (args: HitTestArgs): boolean => {
   if (!getShapeForElement(element)) {
     return false;
   }
+
   const [point, pointAbs, hwidth, hheight] = pointRelativeToElement(
     args.element,
     args.point,
@@ -383,7 +411,11 @@ const hitTestLinear = (args: HitTestArgs): boolean => {
   }
   const [relX, relY] = GAPoint.toTuple(point);
 
-  const shape = getShapeForElement(element) as Drawable[];
+  const shape = getShapeForElement(element as ExcalidrawLinearElement);
+
+  if (!shape) {
+    return false;
+  }
 
   if (args.check === isInsideCheck) {
     const hit = shape.some((subshape) =>
@@ -417,8 +449,9 @@ const pointRelativeToElement = (
   pointTuple: Point,
 ): [GA.Point, GA.Point, number, number] => {
   const point = GAPoint.from(pointTuple);
+  const [x1, y1, x2, y2] = getElementAbsoluteCoords(element);
   const elementCoords = getElementAbsoluteCoords(element);
-  const center = coordsCenter(elementCoords);
+  const center = coordsCenter([x1, y1, x2, y2]);
   // GA has angle orientation opposite to `rotate`
   const rotate = GATransform.rotation(center, element.angle);
   const pointRotated = GATransform.apply(rotate, point);
@@ -449,8 +482,8 @@ export const pointInAbsoluteCoords = (
 const relativizationToElementCenter = (
   element: ExcalidrawElement,
 ): GA.Transform => {
-  const elementCoords = getElementAbsoluteCoords(element);
-  const center = coordsCenter(elementCoords);
+  const [x1, y1, x2, y2] = getElementAbsoluteCoords(element);
+  const center = coordsCenter([x1, y1, x2, y2]);
   // GA has angle orientation opposite to `rotate`
   const rotate = GATransform.rotation(center, element.angle);
   const translate = GA.reverse(
@@ -507,8 +540,8 @@ export const determineFocusPoint = (
   adjecentPoint: Point,
 ): Point => {
   if (focus === 0) {
-    const elementCoords = getElementAbsoluteCoords(element);
-    const center = coordsCenter(elementCoords);
+    const [x1, y1, x2, y2] = getElementAbsoluteCoords(element);
+    const center = coordsCenter([x1, y1, x2, y2]);
     return GAPoint.toTuple(center);
   }
   const relateToCenter = relativizationToElementCenter(element);
@@ -633,7 +666,7 @@ const getCorners = (
 
 // Returns intersection of `line` with `segment`, with `segment` moved by
 // `gap` in its polar direction.
-// If intersection conincides with second segment point returns empty array.
+// If intersection coincides with second segment point returns empty array.
 const intersectSegment = (
   line: GA.Line,
   segment: [GA.Point, GA.Point],
@@ -821,7 +854,7 @@ const hitTestCurveInside = (
   sharpness: ExcalidrawElement["strokeSharpness"],
 ) => {
   const ops = getCurvePathOps(drawable);
-  const points: Point[] = [];
+  const points: Mutable<Point>[] = [];
   let odd = false; // select one line out of double lines
   for (const operation of ops) {
     if (operation.op === "move") {
@@ -835,13 +868,17 @@ const hitTestCurveInside = (
         points.push([operation.data[2], operation.data[3]]);
         points.push([operation.data[4], operation.data[5]]);
       }
+    } else if (operation.op === "lineTo") {
+      if (odd) {
+        points.push([operation.data[0], operation.data[1]]);
+      }
     }
   }
   if (points.length >= 4) {
     if (sharpness === "sharp") {
       return isPointInPolygon(points, x, y);
     }
-    const polygonPoints = pointsOnBezierCurves(points as any, 10, 5);
+    const polygonPoints = pointsOnBezierCurves(points, 10, 5);
     return isPointInPolygon(polygonPoints, x, y);
   }
   return false;
@@ -896,9 +933,10 @@ const hitTestRoughShape = (
       // position of the previous operation
       return retVal;
     } else if (op === "lineTo") {
-      // TODO: Implement this
+      return hitTestCurveInside(drawable, x, y, "sharp");
     } else if (op === "qcurveTo") {
       // TODO: Implement this
+      console.warn("qcurveTo is not implemented yet");
     }
 
     return false;

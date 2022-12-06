@@ -3,7 +3,7 @@ import { ActionManager } from "../actions/manager";
 import { getNonDeletedElements } from "../element";
 import { ExcalidrawElement, PointerType } from "../element/types";
 import { t } from "../i18n";
-import { useIsMobile } from "../components/App";
+import { useDevice } from "../components/App";
 import {
   canChangeSharpness,
   canHaveArrowheads,
@@ -15,39 +15,61 @@ import {
 } from "../scene";
 import { SHAPES } from "../shapes";
 import { AppState, Zoom } from "../types";
-import { capitalizeString, isTransparent, setCursorForShape } from "../utils";
+import {
+  capitalizeString,
+  isTransparent,
+  updateActiveTool,
+  setCursorForShape,
+} from "../utils";
 import Stack from "./Stack";
 import { ToolButton } from "./ToolButton";
 import { hasStrokeColor } from "../scene/comparisons";
+import { trackEvent } from "../analytics";
+import { hasBoundTextElement } from "../element/typeChecks";
+import clsx from "clsx";
+import { actionToggleZenMode } from "../actions";
+import "./Actions.scss";
+import { Tooltip } from "./Tooltip";
+import { shouldAllowVerticalAlign } from "../element/textElement";
 
 export const SelectedShapeActions = ({
   appState,
   elements,
   renderAction,
-  elementType,
 }: {
   appState: AppState;
   elements: readonly ExcalidrawElement[];
   renderAction: ActionManager["renderAction"];
-  elementType: ExcalidrawElement["type"];
 }) => {
   const targetElements = getTargetElements(
     getNonDeletedElements(elements),
     appState,
   );
+
+  let isSingleElementBoundContainer = false;
+  if (
+    targetElements.length === 2 &&
+    (hasBoundTextElement(targetElements[0]) ||
+      hasBoundTextElement(targetElements[1]))
+  ) {
+    isSingleElementBoundContainer = true;
+  }
   const isEditing = Boolean(appState.editingElement);
-  const isMobile = useIsMobile();
+  const device = useDevice();
   const isRTL = document.documentElement.getAttribute("dir") === "rtl";
 
   const showFillIcons =
-    hasBackground(elementType) ||
+    hasBackground(appState.activeTool.type) ||
     targetElements.some(
       (element) =>
         hasBackground(element.type) && !isTransparent(element.backgroundColor),
     );
   const showChangeBackgroundIcons =
-    hasBackground(elementType) ||
+    hasBackground(appState.activeTool.type) ||
     targetElements.some((element) => hasBackground(element.type));
+
+  const showLinkIcon =
+    targetElements.length === 1 || isSingleElementBoundContainer;
 
   let commonSelectedType: string | null = targetElements[0]?.type || null;
 
@@ -60,23 +82,27 @@ export const SelectedShapeActions = ({
 
   return (
     <div className="panelColumn">
-      {((hasStrokeColor(elementType) &&
-        elementType !== "image" &&
-        commonSelectedType !== "image") ||
-        targetElements.some((element) => hasStrokeColor(element.type))) &&
-        renderAction("changeStrokeColor")}
-      {showChangeBackgroundIcons && renderAction("changeBackgroundColor")}
+      <div>
+        {((hasStrokeColor(appState.activeTool.type) &&
+          appState.activeTool.type !== "image" &&
+          commonSelectedType !== "image") ||
+          targetElements.some((element) => hasStrokeColor(element.type))) &&
+          renderAction("changeStrokeColor")}
+      </div>
+      {showChangeBackgroundIcons && (
+        <div>{renderAction("changeBackgroundColor")}</div>
+      )}
       {showFillIcons && renderAction("changeFillStyle")}
 
-      {(hasStrokeWidth(elementType) ||
+      {(hasStrokeWidth(appState.activeTool.type) ||
         targetElements.some((element) => hasStrokeWidth(element.type))) &&
         renderAction("changeStrokeWidth")}
 
-      {(elementType === "freedraw" ||
+      {(appState.activeTool.type === "freedraw" ||
         targetElements.some((element) => element.type === "freedraw")) &&
         renderAction("changeStrokeShape")}
 
-      {(hasStrokeStyle(elementType) ||
+      {(hasStrokeStyle(appState.activeTool.type) ||
         targetElements.some((element) => hasStrokeStyle(element.type))) && (
         <>
           {renderAction("changeStrokeStyle")}
@@ -84,12 +110,12 @@ export const SelectedShapeActions = ({
         </>
       )}
 
-      {(canChangeSharpness(elementType) ||
+      {(canChangeSharpness(appState.activeTool.type) ||
         targetElements.some((element) => canChangeSharpness(element.type))) && (
         <>{renderAction("changeSharpness")}</>
       )}
 
-      {(hasText(elementType) ||
+      {(hasText(appState.activeTool.type) ||
         targetElements.some((element) => hasText(element.type))) && (
         <>
           {renderAction("changeFontSize")}
@@ -100,7 +126,9 @@ export const SelectedShapeActions = ({
         </>
       )}
 
-      {(canHaveArrowheads(elementType) ||
+      {shouldAllowVerticalAlign(targetElements) &&
+        renderAction("changeVerticalAlign")}
+      {(canHaveArrowheads(appState.activeTool.type) ||
         targetElements.some((element) => canHaveArrowheads(element.type))) && (
         <>{renderAction("changeArrowhead")}</>
       )}
@@ -117,7 +145,7 @@ export const SelectedShapeActions = ({
         </div>
       </fieldset>
 
-      {targetElements.length > 1 && (
+      {targetElements.length > 1 && !isSingleElementBoundContainer && (
         <fieldset>
           <legend>{t("labels.align")}</legend>
           <div className="buttonList">
@@ -140,7 +168,16 @@ export const SelectedShapeActions = ({
             )}
             {targetElements.length > 2 &&
               renderAction("distributeHorizontally")}
-            <div className="iconRow">
+            {/* breaks the row ˇˇ */}
+            <div style={{ flexBasis: "100%", height: 0 }} />
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: ".5rem",
+                marginTop: "-0.5rem",
+              }}
+            >
               {renderAction("alignTop")}
               {renderAction("alignVerticallyCentered")}
               {renderAction("alignBottom")}
@@ -150,15 +187,15 @@ export const SelectedShapeActions = ({
           </div>
         </fieldset>
       )}
-      {!isMobile && !isEditing && targetElements.length > 0 && (
+      {!isEditing && targetElements.length > 0 && (
         <fieldset>
           <legend>{t("labels.actions")}</legend>
           <div className="buttonList">
-            {renderAction("duplicateSelection")}
-            {renderAction("deleteSelectedElements")}
+            {!device.isMobile && renderAction("duplicateSelection")}
+            {!device.isMobile && renderAction("deleteSelectedElements")}
             {renderAction("group")}
             {renderAction("ungroup")}
-            {targetElements.length === 1 && renderAction("link")}
+            {showLinkIcon && renderAction("hyperlink")}
           </div>
         </fieldset>
       )}
@@ -168,42 +205,61 @@ export const SelectedShapeActions = ({
 
 export const ShapesSwitcher = ({
   canvas,
-  elementType,
+  activeTool,
   setAppState,
   onImageAction,
+  appState,
 }: {
   canvas: HTMLCanvasElement | null;
-  elementType: ExcalidrawElement["type"];
+  activeTool: AppState["activeTool"];
   setAppState: React.Component<any, AppState>["setState"];
   onImageAction: (data: { pointerType: PointerType | null }) => void;
+  appState: AppState;
 }) => (
   <>
-    {SHAPES.map(({ value, icon, key }, index) => {
+    {SHAPES.map(({ value, icon, key, numericKey, fillable }, index) => {
       const label = t(`toolBar.${value}`);
       const letter = key && (typeof key === "string" ? key : key[0]);
       const shortcut = letter
-        ? `${capitalizeString(letter)} ${t("helpDialog.or")} ${index + 1}`
-        : `${index + 1}`;
+        ? `${capitalizeString(letter)} ${t("helpDialog.or")} ${numericKey}`
+        : `${numericKey}`;
       return (
         <ToolButton
-          className="Shape"
+          className={clsx("Shape", { fillable })}
           key={value}
           type="radio"
           icon={icon}
-          checked={elementType === value}
+          checked={activeTool.type === value}
           name="editor-current-shape"
           title={`${capitalizeString(label)} — ${shortcut}`}
-          keyBindingLabel={`${index + 1}`}
+          keyBindingLabel={numericKey}
           aria-label={capitalizeString(label)}
           aria-keyshortcuts={shortcut}
-          data-testid={value}
+          data-testid={`toolbar-${value}`}
+          onPointerDown={({ pointerType }) => {
+            if (!appState.penDetected && pointerType === "pen") {
+              setAppState({
+                penDetected: true,
+                penMode: true,
+              });
+            }
+          }}
           onChange={({ pointerType }) => {
+            if (appState.activeTool.type !== value) {
+              trackEvent("toolbar", value, "ui");
+            }
+            const nextActiveTool = updateActiveTool(appState, {
+              type: value,
+            });
             setAppState({
-              elementType: value,
+              activeTool: nextActiveTool,
               multiElement: null,
               selectedElementIds: {},
             });
-            setCursorForShape(canvas, value);
+            setCursorForShape(canvas, {
+              ...appState,
+              activeTool: nextActiveTool,
+            });
             if (value === "image") {
               onImageAction({ pointerType });
             }
@@ -221,11 +277,57 @@ export const ZoomActions = ({
   renderAction: ActionManager["renderAction"];
   zoom: Zoom;
 }) => (
-  <Stack.Col gap={1}>
-    <Stack.Row gap={1} align="center">
+  <Stack.Col gap={1} className="zoom-actions">
+    <Stack.Row align="center">
       {renderAction("zoomOut")}
-      {renderAction("zoomIn")}
       {renderAction("resetZoom")}
+      {renderAction("zoomIn")}
     </Stack.Row>
   </Stack.Col>
+);
+
+export const UndoRedoActions = ({
+  renderAction,
+  className,
+}: {
+  renderAction: ActionManager["renderAction"];
+  className?: string;
+}) => (
+  <div className={`undo-redo-buttons ${className}`}>
+    <div className="undo-button-container">
+      <Tooltip label={t("buttons.undo")}>{renderAction("undo")}</Tooltip>
+    </div>
+    <div className="redo-button-container">
+      <Tooltip label={t("buttons.redo")}> {renderAction("redo")}</Tooltip>
+    </div>
+  </div>
+);
+
+export const ExitZenModeAction = ({
+  actionManager,
+  showExitZenModeBtn,
+}: {
+  actionManager: ActionManager;
+  showExitZenModeBtn: boolean;
+}) => (
+  <button
+    className={clsx("disable-zen-mode", {
+      "disable-zen-mode--visible": showExitZenModeBtn,
+    })}
+    onClick={() => actionManager.executeAction(actionToggleZenMode)}
+  >
+    {t("buttons.exitZenMode")}
+  </button>
+);
+
+export const FinalizeAction = ({
+  renderAction,
+  className,
+}: {
+  renderAction: ActionManager["renderAction"];
+  className?: string;
+}) => (
+  <div className={`finalize-button ${className}`}>
+    {renderAction("finalize", { size: "small" })}
+  </div>
 );

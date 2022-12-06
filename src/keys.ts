@@ -1,5 +1,6 @@
 export const isDarwin = /Mac|iPod|iPhone|iPad/.test(window.navigator.platform);
 export const isWindows = /^Win/.test(window.navigator.platform);
+export const isAndroid = /\b(android)\b/i.test(navigator.userAgent);
 
 export const CODES = {
   EQUAL: "Equal",
@@ -17,11 +18,8 @@ export const CODES = {
   SLASH: "Slash",
   C: "KeyC",
   D: "KeyD",
-  G: "KeyG",
-  F: "KeyF",
   H: "KeyH",
   V: "KeyV",
-  X: "KeyX",
   Z: "KeyZ",
   R: "KeyR",
 } as const;
@@ -46,9 +44,12 @@ export const KEYS = {
   COMMA: ",",
 
   A: "a",
+  C: "c",
   D: "d",
   E: "e",
+  F: "f",
   G: "g",
+  H: "h",
   I: "i",
   L: "l",
   O: "o",
@@ -62,6 +63,17 @@ export const KEYS = {
   Y: "y",
   Z: "z",
   K: "k",
+
+  0: "0",
+  1: "1",
+  2: "2",
+  3: "3",
+  4: "4",
+  5: "5",
+  6: "6",
+  7: "7",
+  8: "8",
+  9: "9",
 } as const;
 
 export type Key = keyof typeof KEYS;
@@ -79,5 +91,5 @@ export const shouldMaintainAspectRatio = (event: MouseEvent | KeyboardEvent) =>
   event.shiftKey;
 
 export const shouldRotateWithDiscreteAngle = (
-  event: MouseEvent | KeyboardEvent,
+  event: MouseEvent | KeyboardEvent | React.PointerEvent<HTMLCanvasElement>,
 ) => event.shiftKey;

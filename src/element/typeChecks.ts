@@ -1,3 +1,4 @@
+import { AppState } from "../types";
 import {
   ExcalidrawElement,
   ExcalidrawTextElement,
@@ -8,6 +9,7 @@ import {
   InitializedExcalidrawImageElement,
   ExcalidrawImageElement,
   ExcalidrawTextElementWithContainer,
+  ExcalidrawTextContainer,
 } from "./types";
 
 export const isGenericElement = (
@@ -58,8 +60,14 @@ export const isLinearElement = (
   return element != null && isLinearElementType(element.type);
 };
 
+export const isArrowElement = (
+  element?: ExcalidrawElement | null,
+): element is ExcalidrawLinearElement => {
+  return element != null && element.type === "arrow";
+};
+
 export const isLinearElementType = (
-  elementType: ExcalidrawElement["type"],
+  elementType: AppState["activeTool"]["type"],
 ): boolean => {
   return (
     elementType === "arrow" || elementType === "line" // || elementType === "freedraw"
@@ -68,21 +76,28 @@ export const isLinearElementType = (
 
 export const isBindingElement = (
   element?: ExcalidrawElement | null,
+  includeLocked = true,
 ): element is ExcalidrawLinearElement => {
-  return element != null && isBindingElementType(element.type);
+  return (
+    element != null &&
+    (!element.locked || includeLocked === true) &&
+    isBindingElementType(element.type)
+  );
 };
 
 export const isBindingElementType = (
-  elementType: ExcalidrawElement["type"],
+  elementType: AppState["activeTool"]["type"],
 ): boolean => {
   return elementType === "arrow";
 };
 
 export const isBindableElement = (
   element: ExcalidrawElement | null,
+  includeLocked = true,
 ): element is ExcalidrawBindableElement => {
   return (
     element != null &&
+    (!element.locked || includeLocked === true) &&
     (element.type === "rectangle" ||
       element.type === "diamond" ||
       element.type === "ellipse" ||
@@ -91,13 +106,18 @@ export const isBindableElement = (
   );
 };
 
-export const isTextBindableContainer = (element: ExcalidrawElement | null) => {
+export const isTextBindableContainer = (
+  element: ExcalidrawElement | null,
+  includeLocked = true,
+): element is ExcalidrawTextContainer => {
   return (
     element != null &&
+    (!element.locked || includeLocked === true) &&
     (element.type === "rectangle" ||
       element.type === "diamond" ||
       element.type === "ellipse" ||
-      element.type === "image")
+      element.type === "image" ||
+      isArrowElement(element))
   );
 };
 
@@ -126,6 +146,9 @@ export const isBoundToContainer = (
   element: ExcalidrawElement | null,
 ): element is ExcalidrawTextElementWithContainer => {
   return (
-    element !== null && isTextElement(element) && element.containerId !== null
+    element !== null &&
+    "containerId" in element &&
+    element.containerId !== null &&
+    isTextElement(element)
   );
 };

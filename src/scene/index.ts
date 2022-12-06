@@ -14,7 +14,6 @@ export {
   canHaveArrowheads,
   canChangeSharpness,
   getElementAtPosition,
-  getElementContainingPosition,
   hasText,
   getElementsAtPosition,
 } from "./comparisons";

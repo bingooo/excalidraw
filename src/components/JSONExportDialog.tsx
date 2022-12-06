@@ -1,17 +1,20 @@
 import React, { useState } from "react";
-import { ActionsManagerInterface } from "../actions/types";
 import { NonDeletedExcalidrawElement } from "../element/types";
 import { t } from "../i18n";
-import { useIsMobile } from "./App";
+
 import { AppState, ExportOpts, BinaryFiles } from "../types";
 import { Dialog } from "./Dialog";
-import { exportFile, exportToFileIcon, link } from "./icons";
+import { ExportIcon, exportToFileIcon, LinkIcon } from "./icons";
 import { ToolButton } from "./ToolButton";
 import { actionSaveFileToDisk } from "../actions/actionExport";
 import { Card } from "./Card";
 
 import "./ExportDialog.scss";
 import { nativeFileSystemSupported } from "../data/filesystem";
+import { trackEvent } from "../analytics";
+import { ActionManager } from "../actions/manager";
+import { getFrame } from "../utils";
+import MenuItem from "./MenuItem";
 
 export type ExportCB = (
   elements: readonly NonDeletedExcalidrawElement[],
@@ -29,7 +32,7 @@ const JSONExportModal = ({
   appState: AppState;
   files: BinaryFiles;
   elements: readonly NonDeletedExcalidrawElement[];
-  actionManager: ActionsManagerInterface;
+  actionManager: ActionManager;
   onCloseRequest: () => void;
   exportOpts: ExportOpts;
   canvas: HTMLCanvasElement | null;
@@ -54,14 +57,14 @@ const JSONExportModal = ({
               aria-label={t("exportDialog.disk_button")}
               showAriaLabel={true}
               onClick={() => {
-                actionManager.executeAction(actionSaveFileToDisk);
+                actionManager.executeAction(actionSaveFileToDisk, "ui");
               }}
             />
           </Card>
         )}
         {onExportToBackend && (
           <Card color="pink">
-            <div className="Card-icon">{link}</div>
+            <div className="Card-icon">{LinkIcon}</div>
             <h2>{t("exportDialog.link_title")}</h2>
             <div className="Card-details">{t("exportDialog.link_details")}</div>
             <ToolButton
@@ -70,9 +73,10 @@ const JSONExportModal = ({
               title={t("exportDialog.link_button")}
               aria-label={t("exportDialog.link_button")}
               showAriaLabel={true}
-              onClick={() =>
-                onExportToBackend(elements, appState, files, canvas)
-              }
+              onClick={() => {
+                onExportToBackend(elements, appState, files, canvas);
+                trackEvent("export", "link", `ui (${getFrame()})`);
+              }}
             />
           </Card>
         )}
@@ -94,7 +98,7 @@ export const JSONExportDialog = ({
   elements: readonly NonDeletedExcalidrawElement[];
   appState: AppState;
   files: BinaryFiles;
-  actionManager: ActionsManagerInterface;
+  actionManager: ActionManager;
   exportOpts: ExportOpts;
   canvas: HTMLCanvasElement | null;
 }) => {
@@ -106,16 +110,13 @@ export const JSONExportDialog = ({
 
   return (
     <>
-      <ToolButton
+      <MenuItem
+        icon={ExportIcon}
+        label={t("buttons.export")}
         onClick={() => {
           setModalIsShown(true);
         }}
-        data-testid="json-export-button"
-        icon={exportFile}
-        type="button"
-        aria-label={t("buttons.export")}
-        showAriaLabel={useIsMobile()}
-        title={t("buttons.export")}
+        dataTestId="json-export-button"
       />
       {modalIsShown && (
         <Dialog onCloseRequest={handleClose} title={t("buttons.export")}>

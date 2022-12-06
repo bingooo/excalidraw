@@ -8,49 +8,95 @@
       content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover, shrink-to-fit=no"
     />
     <meta name="referrer" content="origin" />
-
     <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="theme-color" content="#121212" />
 
-    <meta name="theme-color" content="#000" />
+    <!-- Primary Meta Tags -->
+    <meta
+      name="title"
+      content="Excalidraw — Collaborative whiteboarding made easy"
+    />
+    <meta
+      name="description"
+      content="Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+    />
+    <meta name="image" content="https://excalidraw.com/og-general-v1.png" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:site_name" content="Excalidraw" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://excalidraw.com" />
+    <meta
+      property="og:title"
+      content="Excalidraw — Collaborative whiteboarding made easy"
+    />
+    <meta property="og:image:alt" content="Excalidraw logo" />
+    <meta
+      property="og:description"
+      content="Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+    />
+    <meta property="og:image" content="https://excalidraw.com/og-fb-v1.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:site" content="@excalidraw" />
+    <meta property="twitter:url" content="https://excalidraw.com" />
+    <meta
+      property="twitter:title"
+      content="Excalidraw — Collaborative whiteboarding made easy"
+    />
+    <meta
+      property="twitter:description"
+      content="Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
+    />
+    <meta
+      property="twitter:image"
+      content="https://excalidraw.com/og-twitter-v1.png"
+    />
 
     <!-- General tags -->
     <meta
       name="description"
       content="Excalidraw is a virtual collaborative whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
     />
-    <meta name="image" content="og-image.png" />
 
-    <!-- OpenGraph tags -->
-    <meta property="og:url" content="https://excalidraw.com" />
-    <meta property="og:site_name" content="Excalidraw" />
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="Excalidraw" />
-    <meta
-      property="og:description"
-      content="Excalidraw is a whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
-    />
-    <!-- OG tags require an absolute url for images -->
-    <meta
-      property="og:image"
-      name="twitter:image"
-      content="https://excalidraw.com/og-image.png"
-    />
-    <meta
-      property="og:image:secure_url"
-      name="twitter:image"
-      content="https://excalidraw.com/og-image.png"
-    />
-    <meta property="og:image:width" content="1280" />
-    <meta property="og:image:height" content="669" />
-    <meta property="og:image:alt" content="Excalidraw logo with byline." />
+    <!------------------------------------------------------------------------->
+    <!--   to minimize white flash on load when user has dark mode enabled   -->
+    <script>
+      try {
+        //
+        const theme = window.localStorage.getItem("excalidraw-theme");
+        if (theme === "dark") {
+          document.documentElement.classList.add("dark");
+        }
+      } catch {}
+    </script>
+    <style>
+      html.dark {
+        background-color: #121212;
+        color: #fff;
+      }
+    </style>
+    <!------------------------------------------------------------------------->
 
-    <!-- Twitter Card tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Excalidraw" />
-    <meta
-      name="twitter:description"
-      content="Excalidraw is a whiteboard tool that lets you easily sketch diagrams that have a hand-drawn feel to them."
-    />
+    <script>
+      // Redirect Excalidraw+ users which have auto-redirect enabled.
+      //
+      // Redirect only the bare root path, so link/room/library urls are not
+      // redirected.
+      //
+      // Putting into index.html for best performance (can't redirect on server
+      // due to location.hash checks).
+      if (
+        window.location.pathname === "/" &&
+        !window.location.hash &&
+        !window.location.search &&
+        // if its present redirect
+        document.cookie.includes("excplus-autoredirect=true")
+      ) {
+        window.location.href = "https://app.excalidraw.com";
+      }
+    </script>
 
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
@@ -80,18 +126,28 @@
     />
 
     <link
-      href="%REACT_APP_SOCKET_SERVER_URL%/socket.io"
-      rel="preconnect"
-      crossorigin="anonymous"
-    />
-
-    <link
       rel="manifest"
       href="manifest.json"
       style="--pwacompat-splash-font: 24px Virgil"
     />
 
     <link rel="stylesheet" href="fonts.css" type="text/css" />
+    <% if (process.env.REACT_APP_DEV_DISABLE_LIVE_RELOAD==="true" ) { %>
+    <script>
+      {
+        const _WebSocket = window.WebSocket;
+        window.WebSocket = function (url) {
+          if (/ws:\/\/localhost:.+?\/sockjs-node/.test(url)) {
+            console.info(
+              "[!!!] Live reload is disabled via process.env.REACT_APP_DEV_DISABLE_LIVE_RELOAD [!!!]",
+            );
+          } else {
+            return new _WebSocket(url);
+          }
+        };
+      }
+    </script>
+    <% } %>
     <script>
       window.EXCALIDRAW_ASSET_PATH = "/";
       // setting this so that libraries installation reuses this window tab.
@@ -117,8 +173,8 @@
       body,
       html {
         margin: 0;
-        --ui-font: system-ui, BlinkMacSystemFont, -apple-system, Segoe UI,
-          Roboto, Helvetica, Arial, sans-serif;
+        --ui-font: Assistant, system-ui, BlinkMacSystemFont, -apple-system,
+          Segoe UI, Roboto, Helvetica, Arial, sans-serif;
         font-family: var(--ui-font);
         -webkit-text-size-adjust: 100%;
 
@@ -133,30 +189,10 @@
         width: 1px;
         overflow: hidden;
         clip: rect(1px, 1px, 1px, 1px);
-        white-space: nowrap; /* added line */
+        white-space: nowrap;
         user-select: none;
       }
 
-      .LoadingMessage {
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        z-index: 999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        pointer-events: none;
-      }
-
-      .LoadingMessage span {
-        background-color: var(--button-gray-1);
-        border-radius: 5px;
-        padding: 0.8em 1.2em;
-        color: var(--popup-text-color);
-        font-size: 1.3em;
-      }
       #root {
         height: 100%;
         -webkit-touch-callout: none;
@@ -165,8 +201,10 @@
         -moz-user-select: none;
         -ms-user-select: none;
         user-select: none;
+      }
 
-        @media screen and (min-width: 1200px) {
+      @media screen and (min-width: 1200px) {
+        #root {
           -webkit-touch-callout: default;
           -webkit-user-select: auto;
           -khtml-user-select: auto;
@@ -183,10 +221,6 @@
     <header>
       <h1 class="visually-hidden">Excalidraw</h1>
     </header>
-    <div id="root">
-      <div class="LoadingMessage">
-        <span>Loading scene...</span>
-      </div>
-    </div>
+    <div id="root"></div>
   </body>
 </html>

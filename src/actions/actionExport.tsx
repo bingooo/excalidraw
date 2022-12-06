@@ -1,5 +1,4 @@
-import { trackEvent } from "../analytics";
-import { load, questionCircle, saveAs } from "../components/icons";
+import { LoadIcon, questionCircle, saveAs } from "../components/icons";
 import { ProjectName } from "../components/ProjectName";
 import { ToolButton } from "../components/ToolButton";
 import "../components/ToolIcon.scss";
@@ -8,7 +7,7 @@ import { DarkModeToggle } from "../components/DarkModeToggle";
 import { loadFromJSON, saveAsJSON } from "../data";
 import { resaveAsImageWithScene } from "../data/resave";
 import { t } from "../i18n";
-import { useIsMobile } from "../components/App";
+import { useDevice } from "../components/App";
 import { KEYS } from "../keys";
 import { register } from "./register";
 import { CheckboxItem } from "../components/CheckboxItem";
@@ -20,11 +19,13 @@ import { ActiveFile } from "../components/ActiveFile";
 import { isImageFileHandle } from "../data/blob";
 import { nativeFileSystemSupported } from "../data/filesystem";
 import { Theme } from "../element/types";
+import MenuItem from "../components/MenuItem";
+import { getShortcutFromShortcutName } from "./shortcuts";
 
 export const actionChangeProjectName = register({
   name: "changeProjectName",
+  trackEvent: false,
   perform: (_elements, appState, value) => {
-    trackEvent("change", "title");
     return { appState: { ...appState, name: value }, commitToHistory: false };
   },
   PanelComponent: ({ appState, updateData, appProps }) => (
@@ -41,6 +42,7 @@ export const actionChangeProjectName = register({
 
 export const actionChangeExportScale = register({
   name: "changeExportScale",
+  trackEvent: { category: "export", action: "scale" },
   perform: (_elements, appState, value) => {
     return {
       appState: { ...appState, exportScale: value },
@@ -89,6 +91,7 @@ export const actionChangeExportScale = register({
 
 export const actionChangeExportBackground = register({
   name: "changeExportBackground",
+  trackEvent: { category: "export", action: "toggleBackground" },
   perform: (_elements, appState, value) => {
     return {
       appState: { ...appState, exportBackground: value },
@@ -107,6 +110,7 @@ export const actionChangeExportBackground = register({
 
 export const actionChangeExportEmbedScene = register({
   name: "changeExportEmbedScene",
+  trackEvent: { category: "export", action: "embedScene" },
   perform: (_elements, appState, value) => {
     return {
       appState: { ...appState, exportEmbedScene: value },
@@ -128,6 +132,7 @@ export const actionChangeExportEmbedScene = register({
 
 export const actionSaveToActiveFile = register({
   name: "saveToActiveFile",
+  trackEvent: { category: "export" },
   perform: async (elements, appState, value, app) => {
     const fileHandleExists = !!appState.fileHandle;
 
@@ -141,13 +146,15 @@ export const actionSaveToActiveFile = register({
         appState: {
           ...appState,
           fileHandle,
-          toastMessage: fileHandleExists
-            ? fileHandle?.name
-              ? t("toast.fileSavedToFilename").replace(
-                  "{filename}",
-                  `"${fileHandle.name}"`,
-                )
-              : t("toast.fileSaved")
+          toast: fileHandleExists
+            ? {
+                message: fileHandle?.name
+                  ? t("toast.fileSavedToFilename").replace(
+                      "{filename}",
+                      `"${fileHandle.name}"`,
+                    )
+                  : t("toast.fileSaved"),
+              }
             : null,
         },
       };
@@ -172,6 +179,7 @@ export const actionSaveToActiveFile = register({
 
 export const actionSaveFileToDisk = register({
   name: "saveFileToDisk",
+  trackEvent: { category: "export" },
   perform: async (elements, appState, value, app) => {
     try {
       const { fileHandle } = await saveAsJSON(
@@ -200,7 +208,7 @@ export const actionSaveFileToDisk = register({
       icon={saveAs}
       title={t("buttons.saveAs")}
       aria-label={t("buttons.saveAs")}
-      showAriaLabel={useIsMobile()}
+      showAriaLabel={useDevice().isMobile}
       hidden={!nativeFileSystemSupported}
       onClick={() => updateData(null)}
       data-testid="save-as-button"
@@ -210,6 +218,7 @@ export const actionSaveFileToDisk = register({
 
 export const actionLoadScene = register({
   name: "loadScene",
+  trackEvent: { category: "export" },
   perform: async (elements, appState, _, app) => {
     try {
       const {
@@ -237,21 +246,20 @@ export const actionLoadScene = register({
     }
   },
   keyTest: (event) => event[KEYS.CTRL_OR_CMD] && event.key === KEYS.O,
-  PanelComponent: ({ updateData, appState }) => (
-    <ToolButton
-      type="button"
-      icon={load}
-      title={t("buttons.load")}
-      aria-label={t("buttons.load")}
-      showAriaLabel={useIsMobile()}
+  PanelComponent: ({ updateData }) => (
+    <MenuItem
+      label={t("buttons.load")}
+      icon={LoadIcon}
       onClick={updateData}
-      data-testid="load-button"
+      dataTestId="load-button"
+      shortcut={getShortcutFromShortcutName("loadScene")}
     />
   ),
 });
 
 export const actionExportWithDarkMode = register({
   name: "exportWithDarkMode",
+  trackEvent: { category: "export", action: "toggleTheme" },
   perform: (_elements, appState, value) => {
     return {
       appState: { ...appState, exportWithDarkMode: value },

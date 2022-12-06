@@ -3,7 +3,7 @@ import {
   ExcalidrawLinearElement,
   ExcalidrawTextElement,
 } from "../../element/types";
-import { CODES } from "../../keys";
+import { KEYS } from "../../keys";
 import { ToolName } from "../queries/toolQueries";
 import { fireEvent, GlobalTestState } from "../test-utils";
 import { mutateElement } from "../../element/mutateElement";
@@ -179,6 +179,14 @@ export class Pointer {
     this.upAt();
   }
 
+  rightClickAt(x: number, y: number) {
+    fireEvent.contextMenu(GlobalTestState.canvas, {
+      button: 2,
+      clientX: x,
+      clientY: y,
+    });
+  }
+
   doubleClickAt(x: number, y: number) {
     this.moveTo(x, y);
     fireEvent.doubleClick(GlobalTestState.canvas, this.getEvent());
@@ -219,6 +227,14 @@ const mouse = new Pointer("mouse");
 export class UI {
   static clickTool = (toolName: ToolName) => {
     fireEvent.click(GlobalTestState.renderResult.getByToolName(toolName));
+  };
+
+  static clickLabeledElement = (label: string) => {
+    const element = document.querySelector(`[aria-label='${label}']`);
+    if (!element) {
+      throw new Error(`No labeled element found: ${label}`);
+    }
+    fireEvent.click(element);
   };
 
   /**
@@ -298,7 +314,13 @@ export class UI {
   static group(elements: ExcalidrawElement[]) {
     mouse.select(elements);
     Keyboard.withModifierKeys({ ctrl: true }, () => {
-      Keyboard.codePress(CODES.G);
+      Keyboard.keyPress(KEYS.G);
     });
   }
+
+  static queryContextMenu = () => {
+    return GlobalTestState.renderResult.container.querySelector(
+      ".context-menu",
+    );
+  };
 }

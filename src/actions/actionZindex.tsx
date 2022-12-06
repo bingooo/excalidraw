@@ -10,14 +10,15 @@ import { t } from "../i18n";
 import { getShortcutKey } from "../utils";
 import { register } from "./register";
 import {
-  SendBackwardIcon,
-  BringToFrontIcon,
-  SendToBackIcon,
   BringForwardIcon,
+  BringToFrontIcon,
+  SendBackwardIcon,
+  SendToBackIcon,
 } from "../components/icons";
 
 export const actionSendBackward = register({
   name: "sendBackward",
+  trackEvent: { category: "element" },
   perform: (elements, appState) => {
     return {
       elements: moveOneLeft(elements, appState),
@@ -38,13 +39,14 @@ export const actionSendBackward = register({
       onClick={() => updateData(null)}
       title={`${t("labels.sendBackward")} — ${getShortcutKey("CtrlOrCmd+[")}`}
     >
-      <SendBackwardIcon theme={appState.theme} />
+      {SendBackwardIcon}
     </button>
   ),
 });
 
 export const actionBringForward = register({
   name: "bringForward",
+  trackEvent: { category: "element" },
   perform: (elements, appState) => {
     return {
       elements: moveOneRight(elements, appState),
@@ -65,13 +67,14 @@ export const actionBringForward = register({
       onClick={() => updateData(null)}
       title={`${t("labels.bringForward")} — ${getShortcutKey("CtrlOrCmd+]")}`}
     >
-      <BringForwardIcon theme={appState.theme} />
+      {BringForwardIcon}
     </button>
   ),
 });
 
 export const actionSendToBack = register({
   name: "sendToBack",
+  trackEvent: { category: "element" },
   perform: (elements, appState) => {
     return {
       elements: moveAllLeft(elements, appState),
@@ -99,13 +102,15 @@ export const actionSendToBack = register({
           : getShortcutKey("CtrlOrCmd+Shift+[")
       }`}
     >
-      <SendToBackIcon theme={appState.theme} />
+      {SendToBackIcon}
     </button>
   ),
 });
 
 export const actionBringToFront = register({
   name: "bringToFront",
+  trackEvent: { category: "element" },
+
   perform: (elements, appState) => {
     return {
       elements: moveAllRight(elements, appState),
@@ -133,7 +138,7 @@ export const actionBringToFront = register({
           : getShortcutKey("CtrlOrCmd+Shift+]")
       }`}
     >
-      <BringToFrontIcon theme={appState.theme} />
+      {BringToFrontIcon}
     </button>
   ),
 });

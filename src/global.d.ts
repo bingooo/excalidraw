@@ -2,6 +2,8 @@
 interface Document {
   fonts?: {
     ready?: Promise<void>;
+    check?: (font: string, text?: string) => boolean;
+    load?: (font: string, text?: string) => Promise<FontFace[]>;
     addEventListener?(
       type: "loading" | "loadingdone" | "loadingerror",
       listener: (this: Document, ev: Event) => any,
@@ -13,7 +15,25 @@ interface Window {
   ClipboardItem: any;
   __EXCALIDRAW_SHA__: string | undefined;
   EXCALIDRAW_ASSET_PATH: string | undefined;
+  EXCALIDRAW_EXPORT_SOURCE: string;
+  EXCALIDRAW_THROTTLE_RENDER: boolean | undefined;
   gtag: Function;
+}
+
+interface CanvasRenderingContext2D {
+  // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/roundRect
+  roundRect?: (
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    radii:
+      | number // [all-corners]
+      | [number] // [all-corners]
+      | [number, number] // [top-left-and-bottom-right, top-right-and-bottom-left]
+      | [number, number, number] // [top-left, top-right-and-bottom-left, bottom-right]
+      | [number, number, number, number], // [top-left, top-right, bottom-right, bottom-left]
+  ) => void;
 }
 
 // https://github.com/facebook/create-react-app/blob/ddcb7d5/packages/react-scripts/lib/react-app.d.ts
@@ -21,7 +41,7 @@ declare namespace NodeJS {
   interface ProcessEnv {
     readonly REACT_APP_BACKEND_V2_GET_URL: string;
     readonly REACT_APP_BACKEND_V2_POST_URL: string;
-    readonly REACT_APP_SOCKET_SERVER_URL: string;
+    readonly REACT_APP_PORTAL_URL: string;
     readonly REACT_APP_FIREBASE_CONFIG: string;
   }
 }
@@ -33,6 +53,14 @@ interface Clipboard extends EventTarget {
 type Mutable<T> = {
   -readonly [P in keyof T]: T[P];
 };
+
+type ValueOf<T> = T[keyof T];
+
+type Merge<M, N> = Omit<M, keyof N> & N;
+
+/** utility type to assert that the second type is a subtype of the first type.
+ * Returns the subtype. */
+type SubtypeOf<Supertype, Subtype extends Supertype> = Subtype;
 
 type ResolutionType<T extends (...args: any) => any> = T extends (
   ...args: any

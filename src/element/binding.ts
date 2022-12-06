@@ -26,6 +26,7 @@ import Scene from "../scene/Scene";
 import { LinearElementEditor } from "./linearElementEditor";
 import { arrayToMap, tupleToCoors } from "../utils";
 import { KEYS } from "../keys";
+import { getBoundTextElement, handleBindTextResize } from "./textElement";
 
 export type SuggestedBinding =
   | NonDeleted<ExcalidrawBindableElement>
@@ -45,6 +46,20 @@ export const shouldEnableBindingForPointerEvent = (
 
 export const isBindingEnabled = (appState: AppState): boolean => {
   return appState.isBindingEnabled;
+};
+
+const getNonDeletedElements = (
+  scene: Scene,
+  ids: readonly ExcalidrawElement["id"][],
+): NonDeleted<ExcalidrawElement>[] => {
+  const result: NonDeleted<ExcalidrawElement>[] = [];
+  ids.forEach((id) => {
+    const element = scene.getNonDeletedElement(id);
+    if (element != null) {
+      result.push(element);
+    }
+  });
+  return result;
 };
 
 export const bindOrUnbindLinearElement = (
@@ -74,16 +89,17 @@ export const bindOrUnbindLinearElement = (
   const onlyUnbound = Array.from(unboundFromElementIds).filter(
     (id) => !boundToElementIds.has(id),
   );
-  Scene.getScene(linearElement)!
-    .getNonDeletedElements(onlyUnbound)
-    .forEach((element) => {
+
+  getNonDeletedElements(Scene.getScene(linearElement)!, onlyUnbound).forEach(
+    (element) => {
       mutateElement(element, {
         boundElements: element.boundElements?.filter(
           (element) =>
             element.type !== "arrow" || element.id !== linearElement.id,
         ),
       });
-    });
+    },
+  );
 };
 
 const bindOrUnbindLinearElementEdge = (
@@ -253,9 +269,10 @@ export const getHoveredElementForBinding = (
   scene: Scene,
 ): NonDeleted<ExcalidrawBindableElement> | null => {
   const hoveredElement = getElementAtPosition(
-    scene.getElements(),
+    scene.getNonDeletedElements(),
     (element) =>
-      isBindableElement(element) && bindingBorderTest(element, pointerCoords),
+      isBindableElement(element, false) &&
+      bindingBorderTest(element, pointerCoords),
   );
   return hoveredElement as NonDeleted<ExcalidrawBindableElement> | null;
 };
@@ -304,46 +321,52 @@ export const updateBoundElements = (
   const simultaneouslyUpdatedElementIds = getSimultaneouslyUpdatedElementIds(
     simultaneouslyUpdated,
   );
-  Scene.getScene(changedElement)!
-    .getNonDeletedElements(boundLinearElements.map((el) => el.id))
-    .forEach((element) => {
-      if (!isLinearElement(element)) {
-        return;
-      }
 
-      const bindableElement = changedElement as ExcalidrawBindableElement;
-      // In case the boundElements are stale
-      if (!doesNeedUpdate(element, bindableElement)) {
-        return;
-      }
-      const startBinding = maybeCalculateNewGapWhenScaling(
-        bindableElement,
-        element.startBinding,
-        newSize,
-      );
-      const endBinding = maybeCalculateNewGapWhenScaling(
-        bindableElement,
-        element.endBinding,
-        newSize,
-      );
-      // `linearElement` is being moved/scaled already, just update the binding
-      if (simultaneouslyUpdatedElementIds.has(element.id)) {
-        mutateElement(element, { startBinding, endBinding });
-        return;
-      }
-      updateBoundPoint(
-        element,
-        "start",
-        startBinding,
-        changedElement as ExcalidrawBindableElement,
-      );
-      updateBoundPoint(
-        element,
-        "end",
-        endBinding,
-        changedElement as ExcalidrawBindableElement,
-      );
-    });
+  getNonDeletedElements(
+    Scene.getScene(changedElement)!,
+    boundLinearElements.map((el) => el.id),
+  ).forEach((element) => {
+    if (!isLinearElement(element)) {
+      return;
+    }
+
+    const bindableElement = changedElement as ExcalidrawBindableElement;
+    // In case the boundElements are stale
+    if (!doesNeedUpdate(element, bindableElement)) {
+      return;
+    }
+    const startBinding = maybeCalculateNewGapWhenScaling(
+      bindableElement,
+      element.startBinding,
+      newSize,
+    );
+    const endBinding = maybeCalculateNewGapWhenScaling(
+      bindableElement,
+      element.endBinding,
+      newSize,
+    );
+    // `linearElement` is being moved/scaled already, just update the binding
+    if (simultaneouslyUpdatedElementIds.has(element.id)) {
+      mutateElement(element, { startBinding, endBinding });
+      return;
+    }
+    updateBoundPoint(
+      element,
+      "start",
+      startBinding,
+      changedElement as ExcalidrawBindableElement,
+    );
+    updateBoundPoint(
+      element,
+      "end",
+      endBinding,
+      changedElement as ExcalidrawBindableElement,
+    );
+    const boundText = getBoundTextElement(element);
+    if (boundText) {
+      handleBindTextResize(element, false);
+    }
+  });
 };
 
 const doesNeedUpdate = (
@@ -456,13 +479,13 @@ export const getEligibleElementsForBinding = (
 ): SuggestedBinding[] => {
   const includedElementIds = new Set(elements.map(({ id }) => id));
   return elements.flatMap((element) =>
-    isBindingElement(element)
+    isBindingElement(element, false)
       ? (getElligibleElementsForBindingElement(
           element as NonDeleted<ExcalidrawLinearElement>,
         ).filter(
           (element) => !includedElementIds.has(element.id),
         ) as SuggestedBinding[])
-      : isBindableElement(element)
+      : isBindableElement(element, false)
       ? getElligibleElementsForBindableElementAndWhere(element).filter(
           (binding) => !includedElementIds.has(binding[0].id),
         )
@@ -506,9 +529,9 @@ const getElligibleElementsForBindableElementAndWhere = (
   bindableElement: NonDeleted<ExcalidrawBindableElement>,
 ): SuggestedPointBinding[] => {
   return Scene.getScene(bindableElement)!
-    .getElements()
+    .getNonDeletedElements()
     .map((element) => {
-      if (!isBindingElement(element)) {
+      if (!isBindingElement(element, false)) {
         return null;
       }
       const canBindStart = isLinearElementEligibleForNewBindingByBindable(
@@ -659,28 +682,47 @@ export const fixBindingsAfterDeletion = (
   const deletedElementIds = new Set(
     deletedElements.map((element) => element.id),
   );
-  // Non deleted and need an update
-  const boundElementIds: Set<ExcalidrawElement["id"]> = new Set();
+  // non-deleted which bindings need to be updated
+  const affectedElements: Set<ExcalidrawElement["id"]> = new Set();
   deletedElements.forEach((deletedElement) => {
     if (isBindableElement(deletedElement)) {
       deletedElement.boundElements?.forEach((element) => {
         if (!deletedElementIds.has(element.id)) {
-          boundElementIds.add(element.id);
+          affectedElements.add(element.id);
         }
       });
+    } else if (isBindingElement(deletedElement)) {
+      if (deletedElement.startBinding) {
+        affectedElements.add(deletedElement.startBinding.elementId);
+      }
+      if (deletedElement.endBinding) {
+        affectedElements.add(deletedElement.endBinding.elementId);
+      }
     }
   });
-  (
-    sceneElements.filter(({ id }) =>
-      boundElementIds.has(id),
-    ) as ExcalidrawLinearElement[]
-  ).forEach((element: ExcalidrawLinearElement) => {
-    const { startBinding, endBinding } = element;
-    mutateElement(element, {
-      startBinding: newBindingAfterDeletion(startBinding, deletedElementIds),
-      endBinding: newBindingAfterDeletion(endBinding, deletedElementIds),
+  sceneElements
+    .filter(({ id }) => affectedElements.has(id))
+    .forEach((element) => {
+      if (isBindableElement(element)) {
+        mutateElement(element, {
+          boundElements: newBoundElementsAfterDeletion(
+            element.boundElements,
+            deletedElementIds,
+          ),
+        });
+      } else if (isBindingElement(element)) {
+        mutateElement(element, {
+          startBinding: newBindingAfterDeletion(
+            element.startBinding,
+            deletedElementIds,
+          ),
+          endBinding: newBindingAfterDeletion(
+            element.endBinding,
+            deletedElementIds,
+          ),
+        });
+      }
     });
-  });
 };
 
 const newBindingAfterDeletion = (
@@ -691,4 +733,14 @@ const newBindingAfterDeletion = (
     return null;
   }
   return binding;
+};
+
+const newBoundElementsAfterDeletion = (
+  boundElements: ExcalidrawElement["boundElements"],
+  deletedElementIds: Set<ExcalidrawElement["id"]>,
+) => {
+  if (!boundElements) {
+    return null;
+  }
+  return boundElements.filter((ele) => !deletedElementIds.has(ele.id));
 };
