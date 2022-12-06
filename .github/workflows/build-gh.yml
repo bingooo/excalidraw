@@ -1,8 +1,5 @@
 name: build and deploy gh-pages
-on:
-  push:
-    branches:
-      - excalidraw-master
+on: workflow_dispatch
 jobs:
   build_and_deploy:
     name: build and deploy gh-pages
