@@ -6214,10 +6214,6 @@ class App extends React.Component<AppProps, AppState> {
         });
       }
     } else if (type === "element") {
-      const elementsWithUnbindedText = getSelectedElements(
-        elements,
-        this.state,
-      ).some((element) => !hasBoundTextElement(element));
       if (this.state.viewModeEnabled) {
         ContextMenu.push({
           options: [navigator.clipboard && actionCopy, ...options],

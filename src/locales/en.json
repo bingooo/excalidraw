@@ -127,7 +127,8 @@
       "unlockAll": "Unlock all"
     },
     "statusPublished": "Published",
-    "sidebarLock": "Keep sidebar open"
+    "sidebarLock": "Keep sidebar open",
+    "JasonHandwriting": "Chinese JasonHandwriting"
   },
   "library": {
     "noItems": "No items added yet...",

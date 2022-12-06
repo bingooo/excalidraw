@@ -37,6 +37,7 @@ import {
   TextAlignLeftIcon,
   TextAlignCenterIcon,
   TextAlignRightIcon,
+  PenModeIcon,
 } from "../components/icons";
 import {
   DEFAULT_FONT_FAMILY,
@@ -677,7 +678,7 @@ export const actionChangeFontFamily = register({
       {
         value: FONT_FAMILY.JasonHandwriting1,
         text: t("labels.JasonHandwriting"),
-        icon: FreedrawIcon,
+        icon: PenModeIcon,
       },
     ];
 
