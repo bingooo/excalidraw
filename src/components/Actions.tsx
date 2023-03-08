@@ -5,7 +5,7 @@ import { ExcalidrawElement, PointerType } from "../element/types";
 import { t } from "../i18n";
 import { useDevice } from "../components/App";
 import {
-  canChangeSharpness,
+  canChangeRoundness,
   canHaveArrowheads,
   getTargetElements,
   hasBackground,
@@ -110,9 +110,9 @@ export const SelectedShapeActions = ({
         </>
       )}
 
-      {(canChangeSharpness(appState.activeTool.type) ||
-        targetElements.some((element) => canChangeSharpness(element.type))) && (
-        <>{renderAction("changeSharpness")}</>
+      {(canChangeRoundness(appState.activeTool.type) ||
+        targetElements.some((element) => canChangeRoundness(element.type))) && (
+        <>{renderAction("changeRoundness")}</>
       )}
 
       {(hasText(appState.activeTool.type) ||
@@ -219,9 +219,10 @@ export const ShapesSwitcher = ({
   <>
     {SHAPES.map(({ value, icon, key, numericKey, fillable }, index) => {
       const label = t(`toolBar.${value}`);
-      const letter = key && (typeof key === "string" ? key : key[0]);
+      const letter =
+        key && capitalizeString(typeof key === "string" ? key : key[0]);
       const shortcut = letter
-        ? `${capitalizeString(letter)} ${t("helpDialog.or")} ${numericKey}`
+        ? `${letter} ${t("helpDialog.or")} ${numericKey}`
         : `${numericKey}`;
       return (
         <ToolButton
@@ -232,7 +233,7 @@ export const ShapesSwitcher = ({
           checked={activeTool.type === value}
           name="editor-current-shape"
           title={`${capitalizeString(label)} — ${shortcut}`}
-          keyBindingLabel={numericKey}
+          keyBindingLabel={numericKey || letter}
           aria-label={capitalizeString(label)}
           aria-keyshortcuts={shortcut}
           data-testid={`toolbar-${value}`}

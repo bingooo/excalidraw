@@ -1,4 +1,6 @@
+import { ROUNDNESS } from "../constants";
 import { AppState } from "../types";
+import { MarkNonNullable } from "../utility-types";
 import {
   ExcalidrawElement,
   ExcalidrawTextElement,
@@ -10,6 +12,7 @@ import {
   ExcalidrawImageElement,
   ExcalidrawTextElementWithContainer,
   ExcalidrawTextContainer,
+  RoundnessType,
 } from "./types";
 
 export const isGenericElement = (
@@ -135,9 +138,9 @@ export const isExcalidrawElement = (element: any): boolean => {
 
 export const hasBoundTextElement = (
   element: ExcalidrawElement | null,
-): element is ExcalidrawBindableElement => {
+): element is MarkNonNullable<ExcalidrawBindableElement, "boundElements"> => {
   return (
-    isBindableElement(element) &&
+    isTextBindableContainer(element) &&
     !!element.boundElements?.some(({ type }) => type === "text")
   );
 };
@@ -151,4 +154,54 @@ export const isBoundToContainer = (
     element.containerId !== null &&
     isTextElement(element)
   );
+};
+
+export const isUsingAdaptiveRadius = (type: string) => type === "rectangle";
+
+export const isUsingProportionalRadius = (type: string) =>
+  type === "line" || type === "arrow" || type === "diamond";
+
+export const canApplyRoundnessTypeToElement = (
+  roundnessType: RoundnessType,
+  element: ExcalidrawElement,
+) => {
+  if (
+    (roundnessType === ROUNDNESS.ADAPTIVE_RADIUS ||
+      // if legacy roundness, it can be applied to elements that currently
+      // use adaptive radius
+      roundnessType === ROUNDNESS.LEGACY) &&
+    isUsingAdaptiveRadius(element.type)
+  ) {
+    return true;
+  }
+  if (
+    roundnessType === ROUNDNESS.PROPORTIONAL_RADIUS &&
+    isUsingProportionalRadius(element.type)
+  ) {
+    return true;
+  }
+
+  return false;
+};
+
+export const getDefaultRoundnessTypeForElement = (
+  element: ExcalidrawElement,
+) => {
+  if (
+    element.type === "arrow" ||
+    element.type === "line" ||
+    element.type === "diamond"
+  ) {
+    return {
+      type: ROUNDNESS.PROPORTIONAL_RADIUS,
+    };
+  }
+
+  if (element.type === "rectangle") {
+    return {
+      type: ROUNDNESS.ADAPTIVE_RADIUS,
+    };
+  }
+
+  return null;
 };

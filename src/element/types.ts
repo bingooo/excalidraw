@@ -1,5 +1,12 @@
 import { Point } from "../types";
-import { FONT_FAMILY, TEXT_ALIGN, THEME, VERTICAL_ALIGN } from "../constants";
+import {
+  FONT_FAMILY,
+  ROUNDNESS,
+  TEXT_ALIGN,
+  THEME,
+  VERTICAL_ALIGN,
+} from "../constants";
+import { MarkNonNullable, ValueOf } from "../utility-types";
 
 export type ChartType = "bar" | "line";
 export type FillStyle = "hachure" | "cross-hatch" | "solid";
@@ -9,7 +16,8 @@ export type Theme = typeof THEME[keyof typeof THEME];
 export type FontString = string & { _brand: "fontString" };
 export type GroupId = string;
 export type PointerType = "mouse" | "pen" | "touch";
-export type StrokeSharpness = "round" | "sharp";
+export type StrokeRoundness = "round" | "sharp";
+export type RoundnessType = ValueOf<typeof ROUNDNESS>;
 export type StrokeStyle = "solid" | "dashed" | "dotted";
 export type TextAlign = typeof TEXT_ALIGN[keyof typeof TEXT_ALIGN];
 
@@ -25,7 +33,7 @@ type _ExcalidrawElementBase = Readonly<{
   fillStyle: FillStyle;
   strokeWidth: number;
   strokeStyle: StrokeStyle;
-  strokeSharpness: StrokeSharpness;
+  roundness: null | { type: RoundnessType; value?: number };
   roughness: number;
   opacity: number;
   width: number;
@@ -123,7 +131,6 @@ export type ExcalidrawTextElement = _ExcalidrawElementBase &
     fontSize: number;
     fontFamily: FontFamilyValues;
     text: string;
-    baseline: number;
     textAlign: TextAlign;
     verticalAlign: VerticalAlign;
     containerId: ExcalidrawGenericElement["id"] | null;
@@ -142,7 +149,7 @@ export type ExcalidrawTextContainer =
   | ExcalidrawDiamondElement
   | ExcalidrawEllipseElement
   | ExcalidrawImageElement
-  | ExcalidrawArrowEleement;
+  | ExcalidrawArrowElement;
 
 export type ExcalidrawTextElementWithContainer = {
   containerId: ExcalidrawTextContainer["id"];
@@ -167,7 +174,7 @@ export type ExcalidrawLinearElement = _ExcalidrawElementBase &
     endArrowhead: Arrowhead | null;
   }>;
 
-export type ExcalidrawArrowEleement = ExcalidrawLinearElement &
+export type ExcalidrawArrowElement = ExcalidrawLinearElement &
   Readonly<{
     type: "arrow";
   }>;
