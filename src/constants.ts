@@ -107,7 +107,7 @@ export const FONT_FAMILY = {
   Helvetica: 2,
   Cascadia: 3,
   Assistant: 4,
-  JasonHandwriting1: 4,
+  JasonHandwriting1: 5,
 };
 
 export const THEME = {

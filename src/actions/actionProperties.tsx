@@ -762,6 +762,7 @@ export const actionChangeFontFamily = register({
         value: FONT_FAMILY.JasonHandwriting1,
         text: t("labels.JasonHandwriting"),
         icon: PenModeIcon,
+        testId: "font-family-handwriting",
       },
     ];
 
