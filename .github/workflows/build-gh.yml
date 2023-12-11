@@ -18,7 +18,7 @@ jobs:
           yarn run build
       - name: create cname file
         run: |
-          echo "https://excalidraw.weibin.me" > build/CNAME
+          echo "https://excalidraw.weibin.me" > excalidraw-app/build/CNAME
       - name: deploy gh-pages
         run: |
           cd excalidraw-app/build
