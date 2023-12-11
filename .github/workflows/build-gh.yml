@@ -1,4 +1,4 @@
-name: build and deploy gh-pages
+name: Build and deploy gh-pages
 on: workflow_dispatch
 jobs:
   build_and_deploy:
@@ -13,14 +13,15 @@ jobs:
 
       - name: build
         run: |
-          npm install
-          npm run build
+          yarn add @actions/core
+          yarn install:deps
+          yarn run build
       - name: create cname file
         run: |
           echo "https://excalidraw.weibin.me" > build/CNAME
       - name: deploy gh-pages
         run: |
-          cd build
+          cd excalidraw-app/build
           git init
           git config --local user.name bingooo
           git config --local user.email hi@bingooo
